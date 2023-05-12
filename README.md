@@ -23,6 +23,7 @@ In addition to your question, use these optional keywords: [bitcoin|ethereum|ava
 1. Go to https://platform.openai.com/account/api-keys to get open ai api key
 2. Go to Contact https://telegram.me/BotFather on telegram to get bot token
 3. Execute /chatid with the bot to get your chat id
+4. Get news api key for free here : https://newsapi.org/
 
 My Github : https://github.com/Macmachi 
 
