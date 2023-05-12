@@ -3,9 +3,9 @@
 #
 # PROJECT: GPTPLUS
 # AUTHOR: Arnaud (https://github.com/Macmachi)
-# VERSION: 1.0
+# VERSION: 1.1
 # FULLY SUPPORTED LANGUAGES: FRENCH, ENGLISH
-# FEATURES : All GPT4 model capabilities, real time weather information for a city, current news for USA, France, Switzerland, image generations with DALL·E 2 (soon)
+# FEATURES : All GPT4 model capabilities, real time weather information for a city, current news for USA, France, Switzerland, image generations with DALL·E 2 (coming soon)
 # TELEGRAM COMMANDS : /start, /help, /aide, /chatid, /reset, /image (coming soon)
 #
 # DOCUMENTATION API :
@@ -38,8 +38,7 @@ API_KEY = config['KEYS']['OPENAI_API_KEY']
 openai.api_key = API_KEY
 TELEGRAM_BOT_TOKEN = config['KEYS']['TELEGRAM_BOT_TOKEN']
 CHAT_ID = config['KEYS']['CHAT_ID']
-
-BASE_URL = "https://saurav.tech/NewsAPI/top-headlines/category/general"
+NEWSAPI_KEY = config['KEYS']['NEWSAPI_KEY']
 
 # function to display a log message with a time stamp
 def log_message(message):
@@ -109,19 +108,21 @@ async def get_crypto_infos(crypto_id, crypto_name):
         return None
 
 async def get_news_headlines(news_category: str):
-    if news_category == "monde":
-        url = f"{BASE_URL}/us.json"
-    elif news_category == "france":
-        url = f"{BASE_URL}/fr.json"
-    elif news_category == "russie":
-        url = f"{BASE_URL}/ru.json"
-    elif news_category == "usa":
-        url = f"{BASE_URL}/us.json"
-    elif news_category == "uk":
-        url = f"{BASE_URL}/uk.json"    
+    if not NEWSAPI_KEY:
+        log_message(f"A key in the ini file for the news api was NOT detected")
     else:
-        news_category = "usa"
-        url = f"{BASE_URL}/us.json"
+        log_message(f"A key in the ini file for the news api has been detected")
+    if news_category == "monde":
+        # Modifier l'URL pour récupérer les actualités mondiales
+        url = f"https://newsapi.org/v2/top-headlines?country=us&apiKey={NEWSAPI_KEY}"
+    elif news_category == "france":
+        url = f"https://newsapi.org/v2/top-headlines?country=fr&apiKey={NEWSAPI_KEY}"
+    elif news_category == "suisse":
+        url = f"https://newsapi.org/v2/top-headlines?country=ch&apiKey={NEWSAPI_KEY}"
+    elif news_category == "usa":
+        url = f"https://newsapi.org/v2/top-headlines?country=us&apiKey={NEWSAPI_KEY}"
+    else:
+        url = f"https://newsapi.org/v2/top-headlines?language=fr&apiKey={NEWSAPI_KEY}"
 
     try:
         async with aiohttp.ClientSession() as session:
@@ -179,7 +180,7 @@ async def get_weather_data(latitude: float, longitude: float) -> Optional[dict]:
 async def get_gpt4_response(prompt, user_messages, bot, chat_id, authorized_chat_id=None, external_data=None):
     # log the unauthorized chat id that tries to call your bot
     if chat_id != authorized_chat_id:
-        await bot.send_message(chat_id, "Unauthorized access from the user (your chat ID: {chat_id}). You can use my telegram bot with my code : https://github.com/Macmachi/gptplus/")
+        await bot.send_message(chat_id, f"Unauthorized access from the user (your chat ID: {chat_id}). You can use my telegram bot with my code : https://github.com/Macmachi/gptplus/")
         log_message(f"Unauthorized access of the user with the chat_id {chat_id}")
         return
 
@@ -199,45 +200,41 @@ async def get_gpt4_response(prompt, user_messages, bot, chat_id, authorized_chat
                 external_data = f"The crypto information: {crypto_infos} as of the current date and time, {datetime.datetime.now()}, that you need to interpret based on the question in this prompt: {prompt}"
 
     # news in French
-    if "actualités" in prompt.lower() or "l'actualité" in prompt.lower() or "nouvelles" in prompt.lower():
+    if "actualités" in prompt.lower() or "l'actualité" in prompt.lower() or "nouvelles" in prompt.lower() or "infos" in prompt.lower() or "informations" in prompt.lower():
         if "monde" in prompt.lower():
             news_category = "monde"
         elif "france" in prompt.lower():
             news_category = "france"
-        elif "russie" in prompt.lower():
-            news_category = "russie"  
-        elif "uk" in prompt.lower():
-            news_category = "uk"         
+        elif "française" in prompt.lower():
+            news_category = "france"              
+        elif "suisse" in prompt.lower():
+            news_category = "suisse"                
         elif "usa" in prompt.lower():
             news_category = "usa"             
         else:
-            news_category = "usa"
-
-        news_headlines = None
-        if news_category:
-            log_message(f"Successful recovery of the category {news_category}")
-            news_headlines = await get_news_headlines(news_category)
-            if news_headlines is None:
-                log_message(f"Error while retrieving news for the category {news_category}")
-            else:
-                log_message(f"Successful retrieval of headlines from get_news_headlines")
+            news_category = "monde"
+        
+        news_headlines = await get_news_headlines(news_category)
+        log_message(f"Succès de la récupération des headlines depuis get_gpt4_response")
         if news_headlines:
             external_data = f"Voici les actualités aujourd'hui à {datetime.datetime.now()} à traduire en français (si elles ne sont pas en français) pour ({news_category}) : \n\n" + "".join(news_headlines)
 
     # news in English 
-    if "news" in prompt.lower() or "infos" in prompt.lower() or "informations" in prompt.lower() or "new" in prompt.lower() or "headlines" in prompt.lower() :
+    if "news" in prompt.lower() or "new" in prompt.lower() or "headlines" in prompt.lower() :
         if "world" in prompt.lower():
             news_category = "monde"
         elif "france" in prompt.lower():
             news_category = "france"
-        elif "russia" in prompt.lower():
-            news_category = "russia"
-        elif "uk" in prompt.lower():
-            news_category = "uk"       
+        elif "french" in prompt.lower():
+            news_category = "france"    
+        elif "switzerland" in prompt.lower():
+            news_category = "suisse"  
+        elif "swiss" in prompt.lower():
+            news_category = "suisse"       
         elif "usa" in prompt.lower():
             news_category = "usa"             
         else:
-            news_category = "usa"
+            news_category = "monde"
 
         news_headlines = None
         if news_category:
@@ -347,8 +344,14 @@ async def chatid_command(message: types.Message):
     chat_id = get_chat_id(message)
     await message.reply(f"The ID of this chat is {chat_id}")
 
-async def reset_command(message: types.Message):
+async def reset_command(message: types.Message, bot: Bot):
     user_id = message.from_user.id
+    # security measures are implemented to allow only the authorized chat ID to receive messages and use your API key
+    authorized_chat_id = int(CHAT_ID)
+    if message.chat.id != authorized_chat_id:
+        await bot.send_message(message.chat.id, f"Unauthorized access from the user (your chat ID: {message.chat.id}). You can use my telegram bot with my code : https://github.com/Macmachi/gptplus/")
+        log_message(f"Unauthorized access attempt from chat ID: {message.chat.id}")
+        return
     result = reset_conversation_history(user_id)
     if result:
         await message.reply("Conversation history reset successfully.")
@@ -367,7 +370,7 @@ Informations récupérées en temps réel\n
 [METEO] Demander des informations sur la météo actuelle ou dans les 3 prochains jours.
 En plus de votre question, il faut utiliser ces mots clés à choix :\n [météo|temps|température|prévision|soleil|uv|vent|pluie|humidité] + [à|pour] + [NomVille])\n 
 [ACTUALITE] Demander des informations sur l'actualité
-Il faut utiliser ces mots clés à choix : [actualités|l'actualité|nouvelles] + [monde|usa|uk|russie|france])\n 
+Il faut utiliser ces mots clés à choix : [actualités|l'actualité|nouvelles|infos|informations] + [monde|usa|suisse|france])\n 
 [CRYPTOS] Demander des informations sur les cryptos
 En plus de votre question, il faut utiliser ces mots clés à choix : bitcoin|ethereum|avax|monero)\n
 Mon Github : https://github.com/Macmachi/gptplus/
@@ -387,7 +390,7 @@ Real-time information retrieval:
 [WEATHER] Request information about the current weather or the next 3 days.
 In addition to your question, use these keywords:\n   [weather|temperature|forecast|sun|uv|wind|rain|humidity] + [in|for] + [CityName]\n  
 [NEWS] Request information about the news.
-Use these keywords: [news|infos|headlines] + [world|usa|uk|russia|france]\n  
+Use these keywords: [news|headlines] + [world|usa|switzerland||france|french]\n  
 [CRYPTOS] Request information about cryptocurrencies.
 In addition to your question, use these optional keywords: [bitcoin|ethereum|avax|monero]\n
 My Github : https://github.com/Macmachi/gptplus/
@@ -401,7 +404,7 @@ async def handle_message(message: types.Message, bot: Bot):
         user_id = message.from_user.id
         authorized_chat_id = int(CHAT_ID)
         if message.chat.id != authorized_chat_id:
-            await bot.send_message(message.chat.id, "Unauthorized access from the user (your chat ID: {message.chat.id}). You can use my telegram bot with my code : https://github.com/Macmachi/gptplus/")
+            await bot.send_message(message.chat.id, f"Unauthorized access from the user (your chat ID: {message.chat.id}). You can use my telegram bot with my code : https://github.com/Macmachi/gptplus/")
             log_message(f"Unauthorized access attempt from chat ID: {message.chat.id}")
             return
 
@@ -435,7 +438,7 @@ async def main():
     dp.register_message_handler(aide_command, commands=['aide'])
     dp.register_message_handler(help_command, commands=['help'])
     dp.register_message_handler(chatid_command, commands=['chatid'])
-    dp.register_message_handler(reset_command, commands=['reset'])
+    dp.register_message_handler(lambda message: reset_command(message, bot), commands=['reset'])
     dp.register_message_handler(lambda message: handle_message(message, bot), content_types=['text'])
     # add these lines to save the error handlers
     dp.register_errors_handler(on_telegram_api_error, exception=TelegramAPIError)
