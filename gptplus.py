@@ -3,18 +3,17 @@
 #
 # PROJECT: GPTPLUS
 # AUTHOR: Arnaud (https://github.com/Macmachi)
-# VERSION: 1.1
+# VERSION: 1.1.1
 # FULLY SUPPORTED LANGUAGES: FRENCH, ENGLISH
-# FEATURES : All GPT4 model capabilities, real time weather information for a city, current news for USA, France, Switzerland, image generations with DALL·E 2 (coming soon)
-# TELEGRAM COMMANDS : /start, /help, /aide, /chatid, /reset, /image (coming soon)
+# FEATURES : All GPT4 model capabilities, real time weather information for a city, current news for USA, France, Switzerland, image generations with DALL·E 2 
+# TELEGRAM COMMANDS : /start, /help, /aide, /chatid, /reset
 #
 # DOCUMENTATION API :
 # Documentation about OPENAI API : https://platform.openai.com/overview 
 # Prices using OPENAI API : https://openai.com/pricing#language-models
 #
 # NICE-TO-HAVE FEATURES:
-* Implementation of DALL·E 2 to generate images (see here: https://platform.openai.com/docs/guides/images/usage)
-* Implementation of OpenAI's tiktoken to count the used tokens: https://github.com/openai/tiktoken
+* Implementation of OpenAI's tiktoken to count the used tokens: https://github.com/openai/tiktoken + logs the price of the generated images too
 '''
 import asyncio
 import openai
@@ -250,7 +249,7 @@ async def get_gpt4_response(prompt, user_messages, bot, chat_id, authorized_chat
     # weather in French
     keywords = ["temps", "météo", "température", "soleil", "uv", "vent", "pluie", "humidité", "prévision"]
     if any(keyword in prompt.lower() for keyword in keywords):
-        city_match = re.search(r"\b(?:météo|temps|température|prévision|soleil|uv|vent|pluie|humidité|weather|temperature|forecast|sun|uv|wind|rain|humidity)\s+(?:à|pour|in|of)?\s+(\w+)", prompt.lower())
+        city_match = re.search(r"\b(?:météo|temps|température|prévision|soleil|uv|vent|pluie|humidité)\s+(?:à|pour|a)?\s+(\w+)", prompt.lower())
         if city_match:
             city_name = city_match.group(1)
             language = 'fr'
@@ -324,6 +323,15 @@ async def get_gpt4_response(prompt, user_messages, bot, chat_id, authorized_chat
         await bot.send_message(chat_id=chat_id, text=error_message)
         log_message(f"Message d'erreur envoyé à l'utilisateur {chat_id} : {error_message}")
 
+def generate_image(prompt):
+    response = openai.Image.create(
+      prompt=prompt,
+      n=1,
+      size="1024x1024"
+    )
+    image_url = response['data'][0]['url'] # type: ignore
+    return image_url
+
 async def start(message: types.Message):
     await message.reply("""
 Hi there! I'm a bot that uses the OpenAI GPT-4 API. Ask me questions, and I'll do my best to answer them! 
@@ -364,15 +372,16 @@ Voici les commandes que vous pouvez utiliser :
 /start - Démarrer la conversation avec le bot
 /chatid - Récupérer l'id de votre chat
 /reset - Reset la mémoire du bot
-/image - Générer une image avec Dall-e (coming soon) 
 /aide - Afficher ce message d'aide\n\n 
 Informations récupérées en temps réel\n  
 [METEO] Demander des informations sur la météo actuelle ou dans les 3 prochains jours.
-En plus de votre question, il faut utiliser ces mots clés à choix :\n [météo|temps|température|prévision|soleil|uv|vent|pluie|humidité] + [à|pour] + [NomVille])\n 
+En plus de votre question, il faut utiliser ces mots clés à choix :\n [météo|temps|température|prévision|soleil|uv|vent|pluie|humidité] + [à|a|pour] + [NomVille])\n 
 [ACTUALITE] Demander des informations sur l'actualité
 Il faut utiliser ces mots clés à choix : [actualités|l'actualité|nouvelles|infos|informations] + [monde|usa|suisse|france])\n 
 [CRYPTOS] Demander des informations sur les cryptos
 En plus de votre question, il faut utiliser ces mots clés à choix : bitcoin|ethereum|avax|monero)\n
+[IMAGES] Génère des images
+Tapez [génère] + suivi de ce que que vous souhaitez générer\n
 Mon Github : https://github.com/Macmachi/gptplus/
 Mon wallet XMR si tu aimes mon bot telegram : 47aRxaose3a6Uoi8aEo6sDPz3wiqfTePt725zDbgocNuBFSBSXmZNSKUda6YVipRMC9r6N8mD99QjFNDvz9wYGmqHUoMHbR
     """
@@ -384,7 +393,6 @@ Here are the commands you can use:
 /start - Start the conversation with the bot
 /chatid - Retrieve your chat ID
 /reset - Reset the bot's memory
-/image - Generate an image with DALL·E (coming soon) 
 /help - Display this help message\n\n 
 Real-time information retrieval:
 [WEATHER] Request information about the current weather or the next 3 days.
@@ -393,6 +401,10 @@ In addition to your question, use these keywords:\n   [weather|temperature|forec
 Use these keywords: [news|headlines] + [world|usa|switzerland||france|french]\n  
 [CRYPTOS] Request information about cryptocurrencies.
 In addition to your question, use these optional keywords: [bitcoin|ethereum|avax|monero]\n
+[CRYPTOS] Request information about cryptocurrencies.
+In addition to your question, use these optional keywords: [bitcoin|ethereum|avax|monero]\n
+[IMAGES] Generates images
+Type [generate] + followed by what you want to generate\n
 My Github : https://github.com/Macmachi/gptplus/
 My XMR wallet if you like my telegram bot : 47aRxaose3a6Uoi8aEo6sDPz3wiqfTePt725zDbgocNuBFSBSXmZNSKUda6YVipRMC9r6N8mD99QjFNDvz9wYGmqHUoMHbR  
     """
@@ -412,15 +424,23 @@ async def handle_message(message: types.Message, bot: Bot):
 
         prompt = message.text
         log_message(f"value of the prompt coming from Telegram': {prompt}")
-        response = ""
-        response = await get_gpt4_response(prompt, user_messages, bot, message.chat.id, authorized_chat_id)
-        log_message(f"Réponse de l'api d'OpenAI ': {response}")
-        # we format the unchanged user prompt
-        user_messages.append({"role": "user", "content": prompt})
-        # we format the response from OpenAI
-        user_messages.append({"role": "gpt4", "content": response})
-        # we save both of them in the conversation history
-        save_conversation_history(user_id, user_messages)
+        # Si les mots "generate" ou "génère" sont présents dans l'entrée de l'utilisateur
+        if re.search(r'\b(generate|génère)\b', prompt, re.IGNORECASE):
+            # Extraire le texte après "generate" ou "génère" pour l'utiliser comme prompt
+            prompt = re.split(r'\b(generate|génère)\b', prompt, flags=re.IGNORECASE)[-1].strip()
+            # Générer une image et renvoyer l'URL de l'image
+            image_url = generate_image(prompt)
+            await bot.send_photo(chat_id=message.chat.id, photo=image_url)
+        else:
+            response = ""
+            response = await get_gpt4_response(prompt, user_messages, bot, message.chat.id, authorized_chat_id)
+            log_message(f"Réponse de l'api d'OpenAI ': {response}")
+            # we format the unchanged user prompt
+            user_messages.append({"role": "user", "content": prompt})
+            # we format the response from OpenAI
+            user_messages.append({"role": "gpt4", "content": response})
+            # we save both of them in the conversation history
+            save_conversation_history(user_id, user_messages)
 
     except RetryAfter as exception:
         log_message(f"Exception {exception} caught for update {message}. Retrying after {exception.timeout} seconds.")
