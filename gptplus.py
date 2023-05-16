@@ -3,7 +3,7 @@
 #
 # PROJECT: GPTPLUS
 # AUTHOR: Arnaud (https://github.com/Macmachi)
-# VERSION: 1.1.1
+# VERSION: 1.1.2
 # FULLY SUPPORTED LANGUAGES: FRENCH, ENGLISH
 # FEATURES : All GPT4 model capabilities, real time weather information for a city, current news for USA, France, Switzerland, image generations with DALL·E 2 
 # TELEGRAM COMMANDS : /start, /help, /aide, /chatid, /reset
@@ -11,6 +11,9 @@
 # DOCUMENTATION API :
 # Documentation about OPENAI API : https://platform.openai.com/overview 
 # Prices using OPENAI API : https://openai.com/pricing#language-models
+#
+# A améliorer :
+* NONE
 #
 # NICE-TO-HAVE FEATURES:
 * Implementation of OpenAI's tiktoken to count the used tokens: https://github.com/openai/tiktoken + logs the price of the generated images too
@@ -324,13 +327,18 @@ async def get_gpt4_response(prompt, user_messages, bot, chat_id, authorized_chat
         log_message(f"Message d'erreur envoyé à l'utilisateur {chat_id} : {error_message}")
 
 def generate_image(prompt):
-    response = openai.Image.create(
-      prompt=prompt,
-      n=1,
-      size="1024x1024"
-    )
-    image_url = response['data'][0]['url'] # type: ignore
-    return image_url
+    try:
+        response = openai.Image.create(
+          prompt=prompt,
+          n=1,
+          size="1024x1024"
+        )
+        image_url = response['data'][0]['url']  # type: ignore
+        return image_url
+    except Exception as e:
+        error_message = f"Une erreur s'est produite lors de la génération de l'image : {str(e)}"
+        log_message(f"Erreur lors de la génération de l'image : {str(e)}")
+        return None
 
 async def start(message: types.Message):
     await message.reply("""
@@ -401,8 +409,6 @@ In addition to your question, use these keywords:\n   [weather|temperature|forec
 Use these keywords: [news|headlines] + [world|usa|switzerland||france|french]\n  
 [CRYPTOS] Request information about cryptocurrencies.
 In addition to your question, use these optional keywords: [bitcoin|ethereum|avax|monero]\n
-[CRYPTOS] Request information about cryptocurrencies.
-In addition to your question, use these optional keywords: [bitcoin|ethereum|avax|monero]\n
 [IMAGES] Generates images
 Type [generate] + followed by what you want to generate\n
 My Github : https://github.com/Macmachi/gptplus/
@@ -424,13 +430,22 @@ async def handle_message(message: types.Message, bot: Bot):
 
         prompt = message.text
         log_message(f"value of the prompt coming from Telegram': {prompt}")
-        # Si les mots "generate" ou "génère" sont présents dans l'entrée de l'utilisateur
+        # If the words "generate" or "génère" are present in the user's input
         if re.search(r'\b(generate|génère)\b', prompt, re.IGNORECASE):
-            # Extraire le texte après "generate" ou "génère" pour l'utiliser comme prompt
+            # Extract the text after "generate" or "génère" to use it as a prompt
             prompt = re.split(r'\b(generate|génère)\b', prompt, flags=re.IGNORECASE)[-1].strip()
-            # Générer une image et renvoyer l'URL de l'image
-            image_url = generate_image(prompt)
-            await bot.send_photo(chat_id=message.chat.id, photo=image_url)
+            # We remove the words from the prompts
+            prompt = re.sub(r'\b(generate|génère)\b', '', prompt, flags=re.IGNORECASE).strip()
+            # Generate an image and return the image URL
+            try:
+                image_url = generate_image(prompt)
+                if image_url is None:
+                    raise Exception("Error while generating the image.")
+                await bot.send_photo(chat_id=message.chat.id, photo=image_url)
+            except Exception as e:
+                error_message = f"An error occurred while generating the image: {str(e)}"
+                log_message(f"Error while generating the image: {str(e)}")
+                await bot.send_message(chat_id=message.chat.id, text=error_message)
         else:
             response = ""
             response = await get_gpt4_response(prompt, user_messages, bot, message.chat.id, authorized_chat_id)
