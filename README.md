@@ -5,7 +5,6 @@ Here are the commands you can use:
 /start - Start the conversation with the bot
 /chatid - Retrieve your chat ID
 /reset - Reset the bot's memory
-/image - Generate an image with DALL·E (coming soon) 
 /help - Display this help message
 
 Real-time information retrieval:
