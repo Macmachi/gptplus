@@ -19,6 +19,9 @@ Use these keywords: [news|infos|headlines] + [world|usa|uk|russia|france]
 [CRYPTOS] Request information about cryptocurrencies.
 In addition to your question, use these optional keywords: [bitcoin|ethereum|avax|monero]
 
+[IMAGES] Generates images
+Type [generate] + followed by what you want to generate
+
 [Please remember to edit your config.ini file!]
 1. Go to https://platform.openai.com/account/api-keys to get open ai api key
 2. Go to Contact https://telegram.me/BotFather on telegram to get bot token
