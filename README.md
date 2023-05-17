@@ -14,7 +14,7 @@ Real-time information retrieval:
 In addition to your question, use these keywords:\n   [weather|temperature|forecast|sun|uv|wind|rain|humidity] + [in|for] + [CityName]  
 
 [NEWS] Request information about the news.
-Use these keywords: [news|infos|headlines] + [world|usa|uk|russia|france]  
+Use these keywords: [news|infos|headlines] + [world|usa|switzerland|france]  
 
 [CRYPTOS] Request information about cryptocurrencies.
 In addition to your question, use these optional keywords: [bitcoin|ethereum|avax|monero]
