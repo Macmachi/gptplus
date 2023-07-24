@@ -3,7 +3,7 @@
 #
 # PROJECT: GPTPLUS
 # AUTHOR: Arnaud (https://github.com/Macmachi)
-# VERSION: 1.1.2
+# VERSION: 1.1.4
 # FULLY SUPPORTED LANGUAGES: FRENCH, ENGLISH
 # FEATURES : All GPT4 model capabilities, real time weather information for a city, current news for USA, France, Switzerland, image generations with DALL·E 2 
 # TELEGRAM COMMANDS : /start, /help, /aide, /chatid, /reset
@@ -31,10 +31,15 @@ from typing import Tuple, Optional
 import re
 import datetime
 import configparser
+import os
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+config_path = os.path.join(script_dir, 'config.ini')
 
 config = configparser.ConfigParser()
 # Please edit the INI file with personal information (check comments in INI file)
-config.read('config.ini')
+config.read(config_path)
+
 # KEYs from the INI file
 API_KEY = config['KEYS']['OPENAI_API_KEY']
 openai.api_key = API_KEY
