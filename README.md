@@ -30,7 +30,8 @@ Introducing a Python script that integrates the GPT-4 API with a Telegram bot. G
 * Chat ID: Use /chatid with the bot to retrieve your chat ID and change that un the code.
 * News API Key: Get a free API key from NewsAPI.
 
-# Contact :
+# 🔗 Links:
+GitHub: [Macmachi's GitHub](https://github.com/Macmachi )
 
-* My Github : https://github.com/Macmachi 
-* My XMR wallet if you like my telegram bot : 47aRxaose3a6Uoi8aEo6sDPz3wiqfTePt725zDbgocNuBFSBSXmZNSKUda6YVipRMC9r6N8mD99QjFNDvz9wYGmqHUoMHbR  
+# 💖 Support:
+If you appreciate my work and would like to support me, here's my XMR wallet : 47aRxaose3a6Uoi8aEo6sDPz3wiqfTePt725zDbgocNuBFSBSXmZNSKUda6YVipRMC9r6N8mD99QjFNDvz9wYGmqHUoMHbR  
