@@ -7,7 +7,7 @@ Introducing a Python script that integrates the GPT-4 API with a Telegram bot. G
 * /chatid - Retrieve your chat ID
 * /reset - Reset the bot's memory
 * /help - Display this help message
-  
+
 # 📡 Real-time Information Retrieval:
 
 * [WEATHER] Request information about the current weather or the next 3 days.
