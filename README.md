@@ -2,7 +2,7 @@
 
 Introducing a Python script that integrates the GPT-4 API with a Telegram bot. Get real-time information like weather, news, and cryptocurrency updates. This is the new assistant you'll become addicted to!
 
-### Note: gptplus bot based on the GPT-4 architecture will no longer receive specific updates. To take advantage of the latest features, please switch to the recently released ChatGPT application. This application will soon include capabilities from DALL·E 3. Moreover, it will offer the ability to analyze and interpret images, as well as communicate vocally with the bot, both to receive answers and to ask questions. Thank you for your understanding.
+### Note: gptplus bot based on the GPT-4 architecture will no longer receive specific updates. To take advantage of the latest features, please switch to the recently released ChatGPT application. This application will soon include capabilities from DALL·E 3. Moreover, it will offer the ability to analyze and interpret images, as well as communicate vocally, both to receive answers and to ask questions. Thank you for your understanding.
 
 ## 🚀 Commands
 * /start - Start the conversation with the bot
